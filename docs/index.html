@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Frisp</title>
+  <meta name="description" content="Frisp is a noise-cancelling virtual microphone for Windows and macOS.">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #12161a;
+      --ink: #e8ecef;
+      --muted: #a8b0b8;
+      --line: #2a333b;
+      --accent: #2f9e84;
+      --amber: #c47a4a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 18px/1.55 "Segoe UI", Helvetica, sans-serif;
+    }
+    main {
+      max-width: 740px;
+      margin: 0 auto;
+      padding: 64px 24px 96px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font: 64px/1.05 Georgia, "Iowan Old Style", Palatino, serif;
+      letter-spacing: -0.03em;
+    }
+    h2 {
+      margin: 40px 0 8px;
+      font-size: 22px;
+    }
+    p { margin: 0 0 14px; }
+    .lede { color: var(--muted); font-size: 20px; max-width: 38em; }
+    a { color: var(--accent); }
+    ol, ul { margin: 8px 0 0; padding-left: 1.2em; }
+    li { margin: 6px 0; }
+    .flow {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto 1fr;
+      gap: 10px;
+      align-items: center;
+      margin: 28px 0 8px;
+    }
+    .box {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px 12px;
+      text-align: center;
+      background: #181e24;
+    }
+    .box strong { display: block; }
+    .box span { color: var(--muted); font-size: 14px; }
+    .arrow { color: var(--amber); font-size: 22px; }
+    code {
+      font-family: Consolas, "SFMono-Regular", ui-monospace, monospace;
+      font-size: 0.92em;
+    }
+    @media (max-width: 680px) {
+      h1 { font-size: 46px; }
+      .flow { grid-template-columns: 1fr; }
+      .arrow { transform: rotate(90deg); justify-self: center; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Frisp</h1>
+    <p class="lede">A noise-cancelling virtual microphone. Choose the mic you want cleaned, then pick Frisp Mic in OBS, Streamyard, or any other app.</p>
+
+    <div class="flow">
+      <div class="box"><strong>Your mic</strong><span>the source you pick</span></div>
+      <div class="arrow">→</div>
+      <div class="box"><strong>Frisp</strong><span>voice stays, noise goes</span></div>
+      <div class="arrow">→</div>
+      <div class="box"><strong>Frisp Mic</strong><span>what other apps record</span></div>
+    </div>
+
+    <h2>Use it</h2>
+    <ol>
+      <li>Install Frisp and its virtual microphone.</li>
+      <li>Open Frisp and choose a microphone. Leave Frisp open.</li>
+      <li>In your meeting or streaming app, select <strong>Frisp Mic</strong>.</li>
+    </ol>
+    <p>The original microphone stays available, unchanged, for anything that should hear the room as it is.</p>
+
+    <h2>Install</h2>
+    <p>Downloads are on the <a href="https://github.com/TechJeeper/Frisp/releases">GitHub releases</a> page.</p>
+    <p><strong>macOS.</strong> Unzip the release, run <code>install-macos.sh</code>, then open <code>Frisp.app</code>. macOS will ask for microphone permission.</p>
+    <p><strong>Windows.</strong> Unzip the release and run <code>install-windows.ps1</code> as administrator, then start Frisp. Windows loads the virtual microphone only when the driver is trusted. Test-signed builds need test signing and Secure Boot turned off.</p>
+
+    <h2>What it does to the sound</h2>
+    <p>Frisp listens to the microphone you picked, mixes it to a single voice channel, and runs the open-source RNNoise model in real time. Fans, room rumble, and keyboard noise drop back. Speech stays. The result is published on Frisp Mic at 48 kHz.</p>
+    <p>Noise cancellation can be switched off. Frisp still sends the selected microphone to Frisp Mic.</p>
+
+    <h2>Source</h2>
+    <p>Frisp is MIT licensed. The app, the macOS virtual microphone, and the build instructions are in the <a href="https://github.com/TechJeeper/Frisp">repository</a>.</p>
+  </main>
+</body>
+</html>
