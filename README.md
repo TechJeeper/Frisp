@@ -16,12 +16,13 @@ Frisp has to stay open while you want the cleaned microphone. Your original micr
 
 ### Windows
 
-1. Unzip the Windows release.
-2. Run `install-windows.ps1` from an administrator PowerShell. This installs the virtual microphone driver.
-3. Start `frisp.exe` and choose your microphone.
-4. In OBS, Streamyard, or another app, select **Frisp Mic**.
+Windows will only load a virtual microphone driver that Microsoft has signed. With Secure Boot on, Frisp uses [VB-Audio Virtual Cable](https://vb-audio.com/Cable/), which is already signed. Install that cable yourself, then reboot.
 
-Windows only loads a virtual microphone driver that the system trusts. A test-signed driver requires test signing, which also requires Secure Boot to be off. Production installs need a Microsoft-attested driver signature.
+1. Unzip the Windows release and start `frisp.exe`.
+2. Choose your microphone.
+3. In OBS, Streamyard, or another app, select **CABLE Output**.
+
+To show that microphone as **Frisp Mic**, run `install-windows.ps1` from an administrator PowerShell after the cable is installed. It renames the cable endpoints. It does not turn off Secure Boot.
 
 ## Build
 

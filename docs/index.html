@@ -93,7 +93,7 @@
     <h2>Install</h2>
     <p>Downloads are on the <a href="https://github.com/TechJeeper/Frisp/releases">GitHub releases</a> page.</p>
     <p><strong>macOS.</strong> Unzip the release, run <code>install-macos.sh</code>, then open <code>Frisp.app</code>. macOS will ask for microphone permission.</p>
-    <p><strong>Windows.</strong> Unzip the release and run <code>install-windows.ps1</code> as administrator, then start Frisp. Windows loads the virtual microphone only when the driver is trusted. Test-signed builds need test signing and Secure Boot turned off.</p>
+    <p><strong>Windows.</strong> Install <a href="https://vb-audio.com/Cable/">VB-Audio Virtual Cable</a>, reboot, then start Frisp. In other apps, choose the microphone named CABLE Output. To label it Frisp Mic, run <code>install-windows.ps1</code> as administrator after the cable is installed. Secure Boot can stay on.</p>
 
     <h2>What it does to the sound</h2>
     <p>Frisp listens to the microphone you picked, mixes it to a single voice channel, and runs the open-source RNNoise model in real time. Fans, room rumble, and keyboard noise drop back. Speech stays. The result is published on Frisp Mic at 48 kHz.</p>

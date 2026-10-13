@@ -1,31 +1,47 @@
-# Installs the Frisp virtual microphone. Run from an administrator PowerShell.
+# Renames VB-Audio Virtual Cable endpoints to Frisp Mic and Frisp Output.
+# Run from an administrator PowerShell after the cable is installed. Secure Boot stays on.
 $ErrorActionPreference = "Stop"
-$here = Split-Path -Parent $MyInvocation.MyCommand.Path
-$root = $here
-if (Test-Path (Join-Path $here "..\driver")) {
-    $root = (Resolve-Path (Join-Path $here "..")).Path
+
+$friendly = "{a45c254e-df1c-4efd-8020-67d146a850e0},2"
+
+function Get-EndpointName([string]$PropertiesPath) {
+    $item = Get-ItemProperty -Path $PropertiesPath -ErrorAction SilentlyContinue
+    if (-not $item) { return $null }
+    return $item.$friendly
 }
-$inf = Get-ChildItem -Path (Join-Path $root "driver\windows") -Recurse -Filter *.inf -ErrorAction SilentlyContinue |
-    Select-Object -First 1
+
+function Set-EndpointName([string]$Flow, [string]$Match, [string]$NewName) {
+    $root = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\$Flow"
+    $renamed = $false
+    foreach ($endpoint in Get-ChildItem $root -ErrorAction SilentlyContinue) {
+        $props = Join-Path $endpoint.PSPath "Properties"
+        $name = Get-EndpointName $props
+        if ($name -and $name -like $Match) {
+            Set-ItemProperty -Path $props -Name $friendly -Value $NewName
+            Write-Host "Renamed $name to $NewName"
+            $renamed = $true
+        }
+    }
+    return $renamed
+}
 
 Write-Host "Frisp virtual microphone" -ForegroundColor Cyan
 
-try {
-    $secureBoot = (Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\SecureBoot\State" -Name UEFISecureBootEnabled -ErrorAction Stop).UEFISecureBootEnabled
-} catch {
-    $secureBoot = $null
-}
-
-if ($secureBoot -eq 1) {
-    Write-Host "Secure Boot is on. Windows will not load a test-signed virtual microphone driver until Secure Boot is turned off and test signing is enabled, or until the driver has a Microsoft attestation signature." -ForegroundColor Yellow
-}
-
-if (-not $inf) {
-    Write-Host "No driver package was found under driver\windows."
-    Write-Host "Build the Windows virtual microphone driver, then run this script again."
+$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
+    [Security.Principal.WindowsBuiltInRole]::Administrator)
+if (-not $isAdmin) {
+    Write-Host "Run this script from an administrator PowerShell." -ForegroundColor Yellow
     exit 1
 }
 
-Write-Host "Installing $($inf.FullName)"
-pnputil /add-driver $inf.FullName /install
-Write-Host "If the device does not appear, reboot and check Sound settings for Frisp Mic."
+$capture = Set-EndpointName "Capture" "CABLE Output*" "Frisp Mic"
+$render = Set-EndpointName "Render" "CABLE Input*" "Frisp Output"
+
+if (-not $capture -and -not $render) {
+    Write-Host "VB-Audio Virtual Cable is not installed."
+    Write-Host "Download it from https://vb-audio.com/Cable/ , install it, reboot, then run this script again."
+    exit 1
+}
+
+Restart-Service Audiosrv -Force
+Write-Host "Frisp Mic is ready. Reopen Frisp, then choose Frisp Mic in OBS or your browser."

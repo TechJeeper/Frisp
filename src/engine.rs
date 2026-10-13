@@ -117,14 +117,15 @@ fn open_session(input_name: Option<String>, shared: &Arc<Shared>) -> Option<Sess
     };
 
     let host = cpal::default_host();
-    let Some(output_device) = find_frisp_output(&host) else {
+    let Some(output_device) = find_publish_output(&host) else {
         shared.virtual_ready.store(false, Ordering::Relaxed);
         set_status(
             shared,
-            "Frisp Mic is not installed. Install the virtual microphone, then reopen Frisp.",
+            "Install VB-Audio Virtual Cable from vb-audio.com/Cable, reboot, then reopen Frisp.",
         );
         return None;
     };
+    let output_name = output_device.name().unwrap_or_default();
     let Some(input_device) = find_input(&host, &input_name) else {
         shared.virtual_ready.store(false, Ordering::Relaxed);
         set_status(shared, &format!("Can't find \"{input_name}\"."));
@@ -134,7 +135,14 @@ fn open_session(input_name: Option<String>, shared: &Arc<Shared>) -> Option<Sess
     match start_streams(input_device, output_device, Arc::clone(shared)) {
         Ok(session) => {
             shared.virtual_ready.store(true, Ordering::Relaxed);
-            set_status(shared, "Frisp Mic is live.");
+            if output_name.to_ascii_lowercase().contains("frisp") {
+                set_status(shared, "Frisp Mic is live.");
+            } else {
+                set_status(
+                    shared,
+                    "Frisp is live. In other apps, choose the microphone named CABLE Output.",
+                );
+            }
             Some(session)
         }
         Err(err) => {
@@ -430,28 +438,30 @@ fn process_audio(
     }
 }
 
-fn find_frisp_output(host: &cpal::Host) -> Option<cpal::Device> {
-    let mut fallback = None;
+fn find_publish_output(host: &cpal::Host) -> Option<cpal::Device> {
+    let mut frisp_fallback = None;
+    let mut cable = None;
     let devices = host.output_devices().ok()?;
     for device in devices {
         let name = device.name().unwrap_or_default();
         let lower = name.to_ascii_lowercase();
-        if !lower.contains("frisp") {
-            continue;
+        if lower.contains("frisp") {
+            if lower.contains("output") || lower.contains("speaker") {
+                return Some(device);
+            }
+            frisp_fallback = Some(device);
+        } else if is_cable_render(&lower) {
+            cable = Some(device);
         }
-        if lower.contains("output") || lower.contains("speaker") {
-            return Some(device);
-        }
-        fallback = Some(device);
     }
-    fallback
+    frisp_fallback.or(cable)
 }
 
 fn find_input(host: &cpal::Host, wanted: &str) -> Option<cpal::Device> {
     host.input_devices().ok()?.find(|device| {
         device
             .name()
-            .map(|name| name == wanted && !is_frisp(&name))
+            .map(|name| name == wanted && !is_virtual_mic(&name))
             .unwrap_or(false)
     })
 }
@@ -463,7 +473,7 @@ pub fn list_inputs() -> Vec<String> {
     };
     let mut names: Vec<String> = devices
         .filter_map(|device| device.name().ok())
-        .filter(|name| !is_frisp(name))
+        .filter(|name| !is_virtual_mic(name))
         .collect();
     names.sort();
     names.dedup();
@@ -474,15 +484,24 @@ pub fn default_input_name() -> Option<String> {
     let host = cpal::default_host();
     let device = host.default_input_device()?;
     let name = device.name().ok()?;
-    if is_frisp(&name) {
+    if is_virtual_mic(&name) {
         None
     } else {
         Some(name)
     }
 }
 
-fn is_frisp(name: &str) -> bool {
-    name.to_ascii_lowercase().contains("frisp")
+fn is_virtual_mic(name: &str) -> bool {
+    let lower = name.to_ascii_lowercase();
+    lower.contains("frisp") || is_cable_capture(&lower)
+}
+
+fn is_cable_render(lower: &str) -> bool {
+    lower.contains("cable input")
+}
+
+fn is_cable_capture(lower: &str) -> bool {
+    lower.contains("cable output")
 }
 
 fn pick_output_config(device: &cpal::Device) -> anyhow::Result<cpal::SupportedStreamConfig> {

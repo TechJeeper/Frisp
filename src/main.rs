@@ -164,7 +164,7 @@ impl eframe::App for FrispApp {
                         .color(egui::Color32::from_rgb(120, 128, 136)),
                 );
                 ui.add_space(6.0);
-                ui.label("In OBS, Streamyard, or any browser, choose the microphone named Frisp Mic. Leave Frisp open while you use it.");
+                ui.label("In OBS, Streamyard, or any browser, choose Frisp Mic. With the virtual cable, that microphone is named CABLE Output until it is renamed. Leave Frisp open while you use it.");
             });
         });
     }
