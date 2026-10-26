@@ -35,7 +35,7 @@ cd src-tree
 python3 - << 'PY'
 import pathlib
 for path in pathlib.Path(".").rglob("*"):
-    if path.is_file() and (path.suffix == ".sh" or path.name == "Makefile"):
+    if path.is_file() and (path.suffix in {".sh", ".c"} or path.name == "Makefile"):
         data = path.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
         path.write_bytes(data)
 PY

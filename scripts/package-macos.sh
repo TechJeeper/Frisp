@@ -7,7 +7,11 @@ if [[ -f "$HOME/.cargo/env" ]]; then
   source "$HOME/.cargo/env"
 fi
 cargo build --release
-make -C driver/macos
+mkdir -p "$ROOT/dist"
+clang -mmacosx-version-min=12.0 -arch x86_64 -arch arm64 \
+  -framework CoreAudio -framework CoreFoundation \
+  -o "$ROOT/dist/frisp-cable" "$ROOT/scripts/macos/frisp-cable.c"
+codesign --force --sign - "$ROOT/dist/frisp-cable"
 APP="$ROOT/dist/Frisp.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS"
@@ -19,9 +23,9 @@ STAGE="$ROOT/dist/Frisp-macOS"
 rm -rf "$STAGE"
 mkdir -p "$STAGE"
 cp -R "$APP" "$STAGE/"
-cp -R driver/macos/build/FrispMic.driver "$STAGE/"
+cp "$ROOT/dist/frisp-cable" "$STAGE/frisp-cable"
 cp scripts/install-macos.sh "$STAGE/install-macos.sh"
-chmod +x "$STAGE/install-macos.sh"
+chmod +x "$STAGE/install-macos.sh" "$STAGE/frisp-cable"
 rm -f "$ROOT/dist/Frisp-macOS.zip"
 (cd "$ROOT/dist" && zip -ry Frisp-macOS.zip Frisp-macOS)
 echo "Wrote $ROOT/dist/Frisp-macOS.zip"

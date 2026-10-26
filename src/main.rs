@@ -1,12 +1,53 @@
+#![cfg_attr(windows, windows_subsystem = "windows")]
+
 mod config;
+pub mod dsp;
 mod engine;
 
-use config::Config;
-use engine::{default_input_name, list_inputs, Engine};
-use std::sync::atomic::Ordering;
-use std::sync::Arc;
-use std::time::{Duration, Instant};
+#[cfg(windows)]
+mod cable_setup;
+#[cfg(windows)]
+mod win_paint;
+#[cfg(windows)]
+mod win_ui;
 
+#[cfg(windows)]
+fn main() {
+    std::panic::set_hook(Box::new(|info| {
+        let _ = std::fs::write("frisp_panic.log", format!("PANIC: {info}\n"));
+    }));
+    let _ = std::fs::write("frisp_debug.log", format!("main started, args: {:?}\n", std::env::args().collect::<Vec<_>>()));
+    if std::env::args().any(|arg| arg == "--install-cable") {
+        let code = match cable_setup::install_blocking() {
+            Ok(()) => 0,
+            Err(err) => {
+                let _ = std::fs::write(
+                    dirs::data_dir().unwrap_or_else(|| std::path::PathBuf::from(".")).join("Frisp").join("install-status.txt"),
+                    format!("failed|{}", err),
+                );
+                1
+            }
+        };
+        std::process::exit(code);
+    }
+    if let Err(err) = win_ui::run() {
+        let _ = std::fs::write("frisp_error.log", format!("Error: {err}\n"));
+        eprintln!("Frisp didn't open: {err}");
+    }
+}
+
+#[cfg(not(windows))]
+use config::Config;
+#[cfg(not(windows))]
+use engine::Engine;
+#[cfg(not(windows))]
+use std::sync::atomic::Ordering;
+#[cfg(not(windows))]
+use std::sync::Arc;
+#[cfg(not(windows))]
+use std::time::Duration;
+
+#[cfg(not(windows))]
 fn main() -> eframe::Result {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
@@ -25,6 +66,7 @@ fn main() -> eframe::Result {
     )
 }
 
+#[cfg(not(windows))]
 struct FrispApp {
     config: Config,
     devices: Vec<String>,
@@ -35,56 +77,89 @@ struct FrispApp {
     output_level: f32,
     engine: Engine,
     shared: Arc<engine::Shared>,
-    last_refresh: Instant,
+    chose_initial_input: bool,
 }
 
+#[cfg(not(windows))]
 impl FrispApp {
     fn new() -> Self {
         let config = Config::load();
-        let (engine, shared) = Engine::spawn(config.noise_cancel);
-        let devices = list_inputs();
-        let selected = config
-            .input_device
-            .clone()
-            .filter(|name| devices.iter().any(|device| device == name))
-            .or_else(default_input_name)
-            .filter(|name| devices.iter().any(|device| device == name));
-        engine.set_input(selected.clone());
+        let (engine, shared) = Engine::spawn(
+            config.noise_cancel,
+            config.strength,
+            config.clarity_boost,
+            config.voice_leveler,
+            config.low_cut,
+        );
         Self {
             noise_cancel: config.noise_cancel,
+            selected: None,
             config,
-            devices,
-            selected,
-            status: "Starting.".into(),
+            devices: Vec::new(),
+            status: "Looking for microphones.".into(),
             input_level: 0.0,
             output_level: 0.0,
             engine,
             shared,
-            last_refresh: Instant::now(),
+            chose_initial_input: false,
         }
     }
 
-    fn refresh_devices(&mut self) {
-        self.devices = list_inputs();
+    fn sync_devices(&mut self) {
+        let Ok(devices) = self.shared.devices.lock() else {
+            return;
+        };
+        if devices.is_empty() {
+            return;
+        }
+        let changed = *devices != self.devices;
+        if changed {
+            self.devices = devices.clone();
+        }
+        drop(devices);
         if let Some(selected) = &self.selected {
             if !self.devices.iter().any(|device| device == selected) {
                 self.selected = None;
                 self.engine.set_input(None);
                 self.config.input_device = None;
                 self.config.save();
+                self.chose_initial_input = false;
             }
         }
-        self.last_refresh = Instant::now();
+        if self.chose_initial_input || self.selected.is_some() {
+            if self.selected.is_some() {
+                self.chose_initial_input = true;
+            }
+            return;
+        }
+        let default = self.shared.default_input.lock().ok().and_then(|slot| slot.clone());
+        let selected = self
+            .config
+            .input_device
+            .clone()
+            .filter(|name| self.devices.iter().any(|device| device == name))
+            .or(default)
+            .filter(|name| self.devices.iter().any(|device| device == name));
+        if selected.is_some() {
+            self.selected = selected.clone();
+            self.engine.set_input(selected);
+            self.config.input_device = self.selected.clone();
+            self.config.save();
+            self.chose_initial_input = true;
+        }
     }
 }
 
+#[cfg(not(windows))]
 impl eframe::App for FrispApp {
+    fn clear_color(&self, visuals: &egui::Visuals) -> [f32; 4] {
+        visuals.panel_fill.to_normalized_gamma_f32()
+    }
+
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         apply_theme(ctx);
         ctx.request_repaint_after(Duration::from_millis(33));
-        if self.last_refresh.elapsed() > Duration::from_secs(1) {
-            self.refresh_devices();
-        }
+        self.sync_devices();
         if let Ok(status) = self.shared.status.lock() {
             self.status = status.clone();
         }
@@ -164,12 +239,13 @@ impl eframe::App for FrispApp {
                         .color(egui::Color32::from_rgb(120, 128, 136)),
                 );
                 ui.add_space(6.0);
-                ui.label("In OBS, Streamyard, or any browser, choose Frisp Mic. With the virtual cable, that microphone is named CABLE Output until it is renamed. Leave Frisp open while you use it.");
+                ui.label("In OBS, Streamyard, or any browser, choose Frisp Mic. Leave Frisp open while you use it.");
             });
         });
     }
 }
 
+#[cfg(not(windows))]
 fn meter(ui: &mut egui::Ui, label: &str, level: f32) {
     ui.label(label);
     let width = ui.available_width();
@@ -183,6 +259,7 @@ fn meter(ui: &mut egui::Ui, label: &str, level: f32) {
     }
 }
 
+#[cfg(not(windows))]
 fn apply_theme(ctx: &egui::Context) {
     let mut visuals = egui::Visuals::dark();
     visuals.window_fill = egui::Color32::from_rgb(18, 22, 26);

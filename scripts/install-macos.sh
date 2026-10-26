@@ -1,13 +1,24 @@
 #!/bin/bash
+# Names the BlackHole virtual cable Frisp Mic, the same way install-windows.ps1
+# names VB-Audio Virtual Cable. BlackHole itself is installed separately.
 set -euo pipefail
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-DRIVER="$ROOT/driver/macos/build/FrispMic.driver"
-if [[ ! -d "$DRIVER" ]]; then
-  make -C "$ROOT/driver/macos"
+DIR="$(cd "$(dirname "$0")" && pwd)"
+
+if [[ -x "$DIR/frisp-cable" ]]; then
+  HELPER="$DIR/frisp-cable"
+elif [[ -x "$DIR/macos/frisp-cable" ]]; then
+  HELPER="$DIR/macos/frisp-cable"
+else
+  SRC="$DIR/macos/frisp-cable.c"
+  if [[ ! -f "$SRC" ]]; then
+    echo "frisp-cable is missing. Use the copy shipped next to this script." >&2
+    exit 1
+  fi
+  HELPER="$DIR/macos/frisp-cable"
+  clang -mmacosx-version-min=12.0 -arch x86_64 -arch arm64 \
+    -framework CoreAudio -framework CoreFoundation \
+    -o "$HELPER" "$SRC"
+  codesign --force --sign - "$HELPER"
 fi
-sudo mkdir -p /Library/Audio/Plug-Ins/HAL
-sudo rm -rf /Library/Audio/Plug-Ins/HAL/FrispMic.driver
-sudo cp -R "$DRIVER" /Library/Audio/Plug-Ins/HAL/
-sudo chmod -R 755 /Library/Audio/Plug-Ins/HAL/FrispMic.driver
-sudo killall coreaudiod || true
-echo "Frisp Mic is installed. It shows up as an input in a few seconds."
+
+exec "$HELPER"

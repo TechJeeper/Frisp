@@ -1,5 +1,6 @@
 /target
 /dist
+/temp_dmg
 *.exe
 *.dmg
 *.sys
@@ -7,3 +8,6 @@
 *.cat
 *.obj
 .DS_Store
+frisp_debug.log
+frisp_panic.log
+frisp_error.log

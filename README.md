@@ -6,27 +6,33 @@ Frisp has to stay open while you want the cleaned microphone. Your original micr
 
 ## Install
 
+Both systems use a signed virtual audio cable. Frisp writes the cleaned voice into that cable, and the installer names the microphone **Frisp Mic**.
+
 ### macOS
 
-1. Unzip the macOS release.
-2. Run `install-macos.sh` and enter an administrator password. This copies the virtual microphone into `/Library/Audio/Plug-Ins/HAL` and restarts Core Audio.
+macOS uses [BlackHole 2ch](https://existential.audio/blackhole/), a signed virtual audio cable. Install that cable yourself.
+
+1. Download BlackHole 2ch and install it.
+2. Unzip the macOS release and run `install-macos.sh`. This names the cable **Frisp Mic**.
 3. Open `Frisp.app` and allow microphone access.
 4. Choose your microphone in Frisp.
 5. In OBS, Streamyard, or another app, select **Frisp Mic**.
 
 ### Windows
 
-Windows will only load a virtual microphone driver that Microsoft has signed. With Secure Boot on, Frisp uses [VB-Audio Virtual Cable](https://vb-audio.com/Cable/), which is already signed. Install that cable yourself, then reboot.
+Windows uses [VB-Audio Virtual Cable](https://vb-audio.com/Cable/), a signed virtual audio cable. Secure Boot stays on. Install that cable yourself, then reboot.
 
-1. Unzip the Windows release and start `frisp.exe`.
-2. Choose your microphone.
-3. In OBS, Streamyard, or another app, select **CABLE Output**.
+1. Download VB-Audio Virtual Cable, install it, and reboot.
+2. Unzip the Windows release and run `install-windows.ps1` from an administrator PowerShell. This names the cable **Frisp Mic**.
+3. Start `frisp.exe`.
+4. Choose your microphone in Frisp.
+5. In OBS, Streamyard, or another app, select **Frisp Mic**.
 
-To show that microphone as **Frisp Mic**, run `install-windows.ps1` from an administrator PowerShell after the cable is installed. It renames the cable endpoints. It does not turn off Secure Boot.
+Until that installer has been run, other apps still see the cable's original name: BlackHole 2ch on macOS, CABLE Output on Windows.
 
 ## Build
 
-The app is a Rust program. The macOS virtual microphone is a Core Audio server plugin in `driver/macos`.
+The app is a Rust program.
 
 ```bash
 cargo build --release
@@ -38,7 +44,7 @@ On a Mac:
 scripts/package-macos.sh
 ```
 
-That produces `dist/Frisp-macOS.zip` containing `Frisp.app`, `FrispMic.driver`, and the installer.
+That produces `dist/Frisp-macOS.zip` containing `Frisp.app` and the installer that names the virtual cable.
 
 ## How it works
 

@@ -84,7 +84,7 @@
 
     <h2>Use it</h2>
     <ol>
-      <li>Install Frisp and its virtual microphone.</li>
+      <li>Install the signed virtual cable, then run the Frisp installer so the microphone is named Frisp Mic.</li>
       <li>Open Frisp and choose a microphone. Leave Frisp open.</li>
       <li>In your meeting or streaming app, select <strong>Frisp Mic</strong>.</li>
     </ol>
@@ -92,15 +92,15 @@
 
     <h2>Install</h2>
     <p>Downloads are on the <a href="https://github.com/TechJeeper/Frisp/releases">GitHub releases</a> page.</p>
-    <p><strong>macOS.</strong> Unzip the release, run <code>install-macos.sh</code>, then open <code>Frisp.app</code>. macOS will ask for microphone permission.</p>
-    <p><strong>Windows.</strong> Install <a href="https://vb-audio.com/Cable/">VB-Audio Virtual Cable</a>, reboot, then start Frisp. In other apps, choose the microphone named CABLE Output. To label it Frisp Mic, run <code>install-windows.ps1</code> as administrator after the cable is installed. Secure Boot can stay on.</p>
+    <p><strong>macOS.</strong> Install <a href="https://existential.audio/blackhole/">BlackHole 2ch</a>, unzip the release, and run <code>install-macos.sh</code>. That names the cable Frisp Mic. Open <code>Frisp.app</code> and allow microphone access.</p>
+    <p><strong>Windows.</strong> Install <a href="https://vb-audio.com/Cable/">VB-Audio Virtual Cable</a>, reboot, unzip the release, and run <code>install-windows.ps1</code> as administrator. That names the cable Frisp Mic. Secure Boot can stay on.</p>
 
     <h2>What it does to the sound</h2>
     <p>Frisp listens to the microphone you picked, mixes it to a single voice channel, and runs the open-source RNNoise model in real time. Fans, room rumble, and keyboard noise drop back. Speech stays. The result is published on Frisp Mic at 48 kHz.</p>
     <p>Noise cancellation can be switched off. Frisp still sends the selected microphone to Frisp Mic.</p>
 
     <h2>Source</h2>
-    <p>Frisp is MIT licensed. The app, the macOS virtual microphone, and the build instructions are in the <a href="https://github.com/TechJeeper/Frisp">repository</a>.</p>
+    <p>Frisp is MIT licensed. The app and the installers are in the <a href="https://github.com/TechJeeper/Frisp">repository</a>.</p>
   </main>
 </body>
 </html>
