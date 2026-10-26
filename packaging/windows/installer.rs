@@ -425,6 +425,7 @@ $d.Save()
     }
 }
 
+#[cfg(windows)]
 fn main() {
     let silent = std::env::args().any(|a| a == "/S" || a == "--silent" || a == "-s");
     if silent {
@@ -433,3 +434,6 @@ fn main() {
         win_installer::main_gui();
     }
 }
+
+#[cfg(not(windows))]
+fn main() {}

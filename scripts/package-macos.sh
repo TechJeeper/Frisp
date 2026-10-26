@@ -6,7 +6,7 @@ if [[ -f "$HOME/.cargo/env" ]]; then
   # shellcheck disable=SC1090
   source "$HOME/.cargo/env"
 fi
-cargo build --release
+cargo build --release --bin frisp
 mkdir -p "$ROOT/dist"
 clang -mmacosx-version-min=12.0 -arch x86_64 -arch arm64 \
   -framework CoreAudio -framework CoreFoundation \
